@@ -4,21 +4,19 @@ import {
   Card,
   CardContent,
   Typography,
-  TextField,
-  Button,
-  Alert,
-  CircularProgress
+  TextField
 } from '@mui/material';
 import type { TaskCreate } from '../types';
 import { api } from '../services';
 import { isEmail } from 'validator';
+import { useTask } from '../contexts';
+import { useForm } from '../hooks/useForm';
+import ErrorMessage from './ErrorMessage';
+import SuccessMessage from './SuccessMessage';
+import LoadingButton from './LoadingButton';
 
-interface CreateTaskFormProps {
-  onTaskCreated: () => void;
-}
-
-const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
-  const [formData, setFormData] = useState<TaskCreate>({
+const CreateTaskForm: React.FC = () => {
+  const { formData, handleChange, reset } = useForm<TaskCreate>({
     username: '',
     email: '',
     text: ''
@@ -26,15 +24,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  const handleInputChange = (field: keyof TaskCreate) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
-  };
+  const { refreshTasks } = useTask();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -56,13 +46,9 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
       await api.createTask(formData);
 
       setSuccess(true);
-      setFormData({
-        username: '',
-        email: '',
-        text: ''
-      });
+      reset();
 
-      onTaskCreated();
+      refreshTasks();
 
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -79,24 +65,16 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
           Создать новую задачу
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {error && <ErrorMessage message={error} />}
 
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Задача успешно создана!
-          </Alert>
-        )}
+        {success && <SuccessMessage message="Задача успешно создана!" />}
 
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
             label="Имя пользователя"
             value={formData.username}
-            onChange={handleInputChange('username')}
+            onChange={handleChange('username')}
             margin="normal"
             required
             disabled={loading}
@@ -107,7 +85,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
             label="Email"
             type="email"
             value={formData.email}
-            onChange={handleInputChange('email')}
+            onChange={handleChange('email')}
             margin="normal"
             required
             disabled={loading}
@@ -117,7 +95,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
             fullWidth
             label="Текст задачи"
             value={formData.text}
-            onChange={handleInputChange('text')}
+            onChange={handleChange('text')}
             margin="normal"
             required
             multiline
@@ -125,16 +103,16 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({ onTaskCreated }) => {
             disabled={loading}
           />
 
-          <Button
+          <LoadingButton
             type="submit"
             variant="contained"
             size="large"
             sx={{ mt: 2 }}
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
+            loading={loading}
+            loadingText="Создание..."
           >
-            {loading ? 'Создание...' : 'Создать задачу'}
-          </Button>
+            Создать задачу
+          </LoadingButton>
         </Box>
       </CardContent>
     </Card>
