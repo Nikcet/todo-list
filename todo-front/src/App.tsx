@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Container,
   Box,
@@ -14,8 +14,7 @@ import { Logout } from '@mui/icons-material';
 import TaskList from './components/TaskList';
 import CreateTaskForm from './components/CreateTaskForm';
 import AdminLogin from './components/AdminLogin';
-import { api } from './services';
-import type { Task } from './types';
+import { AuthProvider, useAuth, TaskProvider, useTask, UIProvider, useUI } from './contexts';
 
 const theme = createTheme({
   palette: {
@@ -28,37 +27,17 @@ const theme = createTheme({
   },
 });
 
-function App() {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+const AppContent: React.FC = () => {
+  const { isAdmin, logout, loading } = useAuth();
+  const { showLoginModal, openLoginModal } = useUI();
+  const { refreshKey } = useTask();
 
-  useEffect(() => {
-    // Проверяем, авторизован ли администратор при загрузке
-    setIsAdmin(api.isAuthenticated());
-  }, []);
-
-  const handleLoginSuccess = () => {
-    setIsAdmin(true);
-    setShowLogin(false);
-  };
-
-  const handleLogout = () => {
-    api.logout();
-    setIsAdmin(false);
-  };
-
-  const handleTaskCreated = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
-  const handleTaskUpdated = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  if (loading) {
+    return null; 
+  }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <>
       <Box sx={{ flexGrow: 1 }}>
         <AppBar position="static">
           <Toolbar>
@@ -69,14 +48,14 @@ function App() {
               <Button
                 color="inherit"
                 startIcon={<Logout />}
-                onClick={handleLogout}
+                onClick={logout}
               >
                 Выйти
               </Button>
             ) : (
               <Button
                 color="inherit"
-                onClick={() => setShowLogin(true)}
+                onClick={openLoginModal}
               >
                 Вход для администратора
               </Button>
@@ -86,23 +65,34 @@ function App() {
       </Box>
 
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        {showLogin && !isAdmin ? (
-          <AdminLogin onLoginSuccess={handleLoginSuccess} />
+        {showLoginModal && !isAdmin ? (
+          <AdminLogin />
         ) : (
           <Box display="flex" gap={3} sx={{ width: '100%' }}>
             <Box sx={{ width: '35%' }}>
-              <CreateTaskForm onTaskCreated={handleTaskCreated} />
+              <CreateTaskForm />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <TaskList
-                key={refreshKey}
-                isAdmin={isAdmin}
-                onTaskUpdated={handleTaskUpdated}
-              />
+              <TaskList key={refreshKey} />
             </Box>
           </Box>
         )}
       </Container>
+    </>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <TaskProvider>
+          <UIProvider>
+            <AppContent />
+          </UIProvider>
+        </TaskProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
