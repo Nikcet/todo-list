@@ -16,11 +16,8 @@ import { API_CONFIG, STORAGE_KEYS, HTTP_STATUS, PAGINATION } from '../config';
 
 export class ApiService {
     private static instance: ApiService;
-    private token: string | null = null;
 
-    private constructor() {
-        this.token = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
-    }
+    private constructor() {}
 
     public static getInstance(): ApiService {
         if (!ApiService.instance) {
@@ -72,11 +69,11 @@ export class ApiService {
             ...options,
         };
 
-        // Добавляем токен авторизации если он есть
-        if (this.token) {
+        const token = this.getToken();
+        if (token) {
             config.headers = {
                 ...config.headers,
-                'Authorization': `Bearer ${this.token}`,
+                'Authorization': `Bearer ${token}`,
             };
         }
 
@@ -164,7 +161,6 @@ export class ApiService {
 
         // Сохраняем токен
         if (response.access_token) {
-            this.token = response.access_token;
             localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, response.access_token);
         }
 
@@ -172,15 +168,14 @@ export class ApiService {
     }
 
     public logout(): void {
-        this.token = null;
         localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
     }
 
     public isAuthenticated(): boolean {
-        return !!this.token;
+        return !!this.getToken();
     }
 
     public getToken(): string | null {
-        return this.token;
+        return localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN);
     }
 } 
