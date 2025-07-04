@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Session, create_engine, select
 from typing import List
-from sqlalchemy import Column
+from sqlalchemy import Column, desc
 
 from app.models import Task, Admin
 from app.errors import DatabaseError, NotFoundError, UpdateError, DeleteError
@@ -144,36 +144,55 @@ class DatabaseAPI:
             raise DatabaseError(f"Error getting paginated tasks: {e}")
 
     def get_tasks_sorted_by_username(
-        self, offset: int = 0, limit: int = 3
+        self, offset: int = 0, limit: int = 3, reverse: bool = False
     ) -> List[Task]:
         """Get tasks sorted by username with pagination."""
         try:
             with Session(self.engine) as session:
-                statement = (
-                    select(Task).order_by(Task.username).offset(offset).limit(limit)
-                )
+                if reverse:
+                    statement = (
+                        select(Task).order_by(desc(Task.username)).offset(offset).limit(limit)
+                    )
+                else:
+                    statement = (
+                        select(Task).order_by(Task.username).offset(offset).limit(limit)
+                    )
                 return list(session.exec(statement))
         except Exception as e:
             raise DatabaseError(f"Error sorting tasks by username: {e}")
 
-    def get_tasks_sorted_by_email(self, offset: int = 0, limit: int = 3) -> List[Task]:
+    def get_tasks_sorted_by_email(
+        self, offset: int = 0, limit: int = 3, reverse: bool = False
+    ) -> List[Task]:
         """Get tasks sorted by email with pagination."""
         try:
             with Session(self.engine) as session:
-                statement = (
-                    select(Task).order_by(Task.email).offset(offset).limit(limit)
-                )
+                if reverse:
+                    statement = (
+                        select(Task).order_by(desc(Task.email)).offset(offset).limit(limit)
+                    )
+                else:
+                    statement = (
+                        select(Task).order_by(Task.email).offset(offset).limit(limit)
+                    )
                 return list(session.exec(statement))
         except Exception as e:
             raise DatabaseError(f"Error sorting tasks by email: {e}")
 
-    def get_tasks_sorted_by_status(self, offset: int = 0, limit: int = 3) -> List[Task]:
+    def get_tasks_sorted_by_status(
+        self, offset: int = 0, limit: int = 3, reverse: bool = False
+    ) -> List[Task]:
         """Get tasks sorted by status with pagination."""
         try:
             with Session(self.engine) as session:
-                statement = (
-                    select(Task).order_by(Column("status")).offset(offset).limit(limit)
-                )
+                if reverse:
+                    statement = (
+                        select(Task).order_by(desc(Column("status"))).offset(offset).limit(limit)
+                    )
+                else:
+                    statement = (
+                        select(Task).order_by(Column("status")).offset(offset).limit(limit)
+                    )
                 return list(session.exec(statement))
         except Exception as e:
             raise DatabaseError(f"Error sorting tasks by status: {e}")
