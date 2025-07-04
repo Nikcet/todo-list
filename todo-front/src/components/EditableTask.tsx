@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -8,29 +8,47 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Alert,
-  CircularProgress,
   IconButton
 } from '@mui/material';
 import { Edit, Save, Cancel } from '@mui/icons-material';
 import type { Task, TaskCreate } from '../types';
 import { api } from '../services';
+import { useTask } from '../contexts';
+import { useAuth, useUI } from '../contexts';
+import ErrorMessage from './ErrorMessage';
+import LoadingButton from './LoadingButton';
 
 interface EditableTaskProps {
   task: Task;
-  onTaskUpdated: () => void;
 }
 
-const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
+const EditableTask: React.FC<EditableTaskProps> = ({ task }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTask, setEditedTask] = useState<TaskCreate>({
     username: task.username,
     email: task.email,
     text: task.text,
-    status: task.status
+    status: task.status,
+    edited_by_admin: task.edited_by_admin
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { refreshTasks } = useTask();
+  const { isAdmin, refreshAuthStatus } = useAuth();
+  const { openLoginModal, showLoginModal } = useUI();
+
+  useEffect(() => {
+    if (isAdmin && error?.includes('авторизоваться')) {
+      setError(null);
+    }
+  }, [isAdmin, error]);
+
+  useEffect(() => {
+    if (!showLoginModal && error?.includes('авторизоваться')) {
+      setError(null);
+    }
+  }, [showLoginModal, error]);
 
   const handleInputChange = (field: keyof TaskCreate) => (
     event: React.ChangeEvent<HTMLInputElement>
@@ -42,14 +60,31 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
     }));
   };
 
-  const handleSave = async () => {
+  const handleEditClick = () => {
+    refreshAuthStatus();
+
+    if (!api.isAuthenticated()) {
+      setError('Для редактирования задач необходимо авторизоваться как администратор');
+      openLoginModal();
+      return;
+    }
+    setIsEditing(true);
+    setError(null);
+  };
+
+    const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      await api.updateTask(task.id, editedTask);
+      const taskToUpdate = {
+        ...editedTask,
+        edited_by_admin: true
+      };
+      
+      await api.updateTask(task.id, taskToUpdate);
       setIsEditing(false);
-      onTaskUpdated();
+      refreshTasks();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка при обновлении задачи');
     } finally {
@@ -62,7 +97,8 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
       username: task.username,
       email: task.email,
       text: task.text,
-      status: task.status
+      status: task.status,
+      edited_by_admin: task.edited_by_admin
     });
     setIsEditing(false);
     setError(null);
@@ -73,11 +109,7 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box flex={1}>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
+            {error && <ErrorMessage message={error} />}
 
             {isEditing ? (
               <Box>
@@ -89,7 +121,7 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
                   margin="normal"
                   disabled={loading}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Email"
@@ -99,7 +131,7 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
                   margin="normal"
                   disabled={loading}
                 />
-                
+
                 <TextField
                   fullWidth
                   label="Текст задачи"
@@ -110,7 +142,7 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
                   rows={3}
                   disabled={loading}
                 />
-                
+
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -122,17 +154,18 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
                   label="Задача выполнена"
                   sx={{ mt: 1 }}
                 />
-                
+
                 <Box sx={{ mt: 2 }}>
-                  <Button
+                  <LoadingButton
                     variant="contained"
-                    startIcon={loading ? <CircularProgress size={20} /> : <Save />}
+                    startIcon={<Save />}
                     onClick={handleSave}
-                    disabled={loading}
+                    loading={loading}
+                    loadingText="Сохранение..."
                     sx={{ mr: 1 }}
                   >
-                    {loading ? 'Сохранение...' : 'Сохранить'}
-                  </Button>
+                    Сохранить
+                  </LoadingButton>
                   <Button
                     variant="outlined"
                     startIcon={<Cancel />}
@@ -157,13 +190,18 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task, onTaskUpdated }) => {
                 <Typography variant="body2" color={task.status ? 'success.main' : 'text.secondary'}>
                   Статус: {task.status ? 'Выполнено' : 'В работе'}
                 </Typography>
+                {task.edited_by_admin && (
+                  <Typography variant="body2" color="warning.main" sx={{ mt: 1, fontStyle: 'italic' }}>
+                    Отредактировано администратором
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>
-          
+
           {!isEditing && (
             <IconButton
-              onClick={() => setIsEditing(true)}
+              onClick={handleEditClick}
               color="primary"
               size="small"
             >
