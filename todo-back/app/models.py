@@ -15,8 +15,5 @@ class Task(SQLModel, table=True):
 
 class Admin(SQLModel, table=True):
     id: str = Field(default_factory=uuid, primary_key=True)
-    username: str = Field(
-        min_length=2,
-        max_length=30,
-    )
+    username: str = Field(min_length=2, max_length=30, unique=True)
     password: str = Field(min_length=3)

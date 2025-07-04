@@ -21,3 +21,11 @@ class AdminCreate(BaseModel):
 class AdminRead(BaseModel):
     id: str
     username: str
+
+class AdminAuth(BaseModel):
+    username: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

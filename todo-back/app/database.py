@@ -4,6 +4,8 @@ from sqlalchemy import Column
 
 from app.models import Task, Admin
 from app.errors import DatabaseError, NotFoundError, UpdateError, DeleteError
+from app.utils import get_password_hash
+from app import settings
 
 
 class DatabaseAPI:
@@ -13,14 +15,13 @@ class DatabaseAPI:
     All methods raise exceptions on errors for handling in endpoints.
     """
 
-    def __init__(self, db_url: str = "sqlite:///database.db"):
+    def __init__(self, db_url: str = settings.db_url):
         try:
             self.engine = create_engine(db_url, echo=False)
             SQLModel.metadata.create_all(self.engine)
         except Exception as e:
             raise DatabaseError(f"Database initialization error: {e}")
 
-    # --- Task CRUD ---
     def create_task(self, task: Task) -> Task:
         """Create a new task."""
         try:
@@ -77,11 +78,27 @@ class DatabaseAPI:
         except Exception as e:
             raise DeleteError(f"Error deleting task: {e}")
 
-    # --- Admin CRUD ---
+    def get_all_tasks(self) -> List[Task]:
+        """Get all tasks."""
+        try:
+            with Session(self.engine) as session:
+                statement = select(Task)
+                return list(session.exec(statement))
+        except Exception as e:
+            raise DatabaseError(f"Error getting all tasks: {e}")
+
     def create_admin(self, admin: Admin) -> Admin:
         """Create a new admin."""
         try:
+            admin.password = get_password_hash(admin.password)
             with Session(self.engine) as session:
+
+                statement = select(Admin).where(Admin.username == admin.username)
+                if session.exec(statement).first():
+                    raise DatabaseError(
+                        f"Admin with username {admin.username} already exists"
+                    )
+
                 session.add(admin)
                 session.commit()
                 session.refresh(admin)
@@ -103,7 +120,20 @@ class DatabaseAPI:
         except Exception as e:
             raise DeleteError(f"Error deleting admin: {e}")
 
-    # --- Task Queries ---
+    def get_admin_by_username(self, username: str) -> Admin:
+        """Get admin by username."""
+        try:
+            with Session(self.engine) as session:
+                statement = select(Admin).where(Admin.username == username)
+                admin = session.exec(statement).first()
+                if not admin:
+                    raise NotFoundError(f"Admin with username {username} not found")
+                return admin
+        except NotFoundError:
+            raise
+        except Exception as e:
+            raise DatabaseError(f"Error getting admin: {e}")
+
     def get_tasks_paginated(self, offset: int = 0, limit: int = 3) -> List[Task]:
         """Get tasks with pagination."""
         try:
@@ -147,12 +177,3 @@ class DatabaseAPI:
                 return list(session.exec(statement))
         except Exception as e:
             raise DatabaseError(f"Error sorting tasks by status: {e}")
-
-    def get_all_tasks(self) -> List[Task]:
-        """Get all tasks."""
-        try:
-            with Session(self.engine) as session:
-                statement = select(Task)
-                return list(session.exec(statement))
-        except Exception as e:
-            raise DatabaseError(f"Error getting all tasks: {e}")

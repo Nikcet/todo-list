@@ -1,12 +1,16 @@
+import jwt
 from pydantic import HttpUrl
 from fastapi import APIRouter, Depends, HTTPException, Body, Query
 import traceback
 from typing import List
 
 from app.database import DatabaseAPI, DatabaseError, NotFoundError, UpdateError, DeleteError
-from app.schemas import TaskCreate, TaskRead, AdminCreate, AdminRead
+from app.schemas import TaskCreate, TaskRead, AdminCreate, AdminRead, AdminAuth, TokenResponse
 from app.models import Task, Admin
-from app import logger
+from app.dependencies import get_current_admin
+from app.utils import verify_password
+from app import logger, settings
+
 
 router = APIRouter()
 
@@ -41,7 +45,7 @@ def get_task(task_id: str):
         raise HTTPException(status_code=500, detail="Unexpected error while getting task")
 
 @router.patch("/task/{task_id}", response_model=TaskRead)
-def update_task(task_id: str, data: TaskCreate):
+def update_task(task_id: str, data: TaskCreate, admin=Depends(get_current_admin)):
     try:
         result = db.update_task(task_id, **data.model_dump())
         return TaskRead(**result.model_dump())
@@ -56,7 +60,7 @@ def update_task(task_id: str, data: TaskCreate):
         raise HTTPException(status_code=500, detail="Unexpected error while updating task")
 
 @router.delete("/task/{task_id}")
-def delete_task(task_id: str):
+def delete_task(task_id: str, admin=Depends(get_current_admin)):
     try:
         db.delete_task(task_id)
         return {"success": True}
@@ -97,6 +101,18 @@ def delete_admin(admin_id: str):
     except Exception as e:
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail="Unexpected error while deleting admin")
+
+@router.post("/admins/auth", response_model=TokenResponse)
+def admin_login(auth_data: AdminAuth):
+    try:
+        admin = db.get_admin_by_username(auth_data.username)
+        if not verify_password(auth_data.password, admin.password):
+            raise HTTPException(status_code=401, detail="Incorrect username or password")
+        token_data = {"sub": admin.username}
+        access_token = jwt.encode(token_data, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+        return TokenResponse(access_token=access_token)
+    except NotFoundError:
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
 
 # --- Task Queries ---
 @router.get("/tasks/", response_model=List[TaskRead])
