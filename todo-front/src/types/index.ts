@@ -4,6 +4,7 @@ export interface Task {
     email: string;
     text: string;
     status: boolean;
+    edited_by_admin?: boolean;
 }
 
 export interface TaskCreate {
@@ -11,6 +12,7 @@ export interface TaskCreate {
     email: string;
     text: string;
     status?: boolean;
+    edited_by_admin?: boolean;
 }
 
 export interface Admin {
