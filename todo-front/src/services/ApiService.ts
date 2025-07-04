@@ -123,16 +123,16 @@ export class ApiService {
         return this.request<Task[]>(`/tasks/?offset=${offset}&limit=${limit}`);
     }
 
-    public async getTasksSortedByUsername(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT): Promise<Task[]> {
-        return this.request<Task[]>(`/tasks/sorted/username?offset=${offset}&limit=${limit}`);
+    public async getTasksSortedByUsername(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT, reverse: boolean = false): Promise<Task[]> {
+        return this.request<Task[]>(`/tasks/sorted/username?offset=${offset}&limit=${limit}&reverse=${reverse}`);
     }
 
-    public async getTasksSortedByEmail(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT): Promise<Task[]> {
-        return this.request<Task[]>(`/tasks/sorted/email?offset=${offset}&limit=${limit}`);
+    public async getTasksSortedByEmail(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT, reverse: boolean = false): Promise<Task[]> {
+        return this.request<Task[]>(`/tasks/sorted/email?offset=${offset}&limit=${limit}&reverse=${reverse}`);
     }
 
-    public async getTasksSortedByStatus(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT): Promise<Task[]> {
-        return this.request<Task[]>(`/tasks/sorted/status?offset=${offset}&limit=${limit}`);
+    public async getTasksSortedByStatus(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT, reverse: boolean = false): Promise<Task[]> {
+        return this.request<Task[]>(`/tasks/sorted/status?offset=${offset}&limit=${limit}&reverse=${reverse}`);
     }
 
     public async getAllTasks(): Promise<Task[]> {

@@ -6,8 +6,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Button,
 } from '@mui/material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import type { Task } from '../types';
 import { api } from '../services';
 import EditableTask from './EditableTask';
@@ -18,6 +20,7 @@ import InfoMessage from './InfoMessage';
 import { useAuth } from '../contexts';
 
 type SortOption = 'username' | 'email' | 'status' | 'none';
+type SortDirection = 'asc' | 'desc';
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -25,6 +28,7 @@ const TaskList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>('none');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [totalPages, setTotalPages] = useState(1);
 
   const { isAdmin } = useAuth();
@@ -42,15 +46,17 @@ const TaskList: React.FC = () => {
       
       let fetchedTasks: Task[];
       
+      const reverse = sortDirection === 'desc';
+      
       switch (sortBy) {
         case 'username':
-          fetchedTasks = await api.getTasksSortedByUsername(offset, limit);
+          fetchedTasks = await api.getTasksSortedByUsername(offset, limit, reverse);
           break;
         case 'email':
-          fetchedTasks = await api.getTasksSortedByEmail(offset, limit);
+          fetchedTasks = await api.getTasksSortedByEmail(offset, limit, reverse);
           break;
         case 'status':
-          fetchedTasks = await api.getTasksSortedByStatus(offset, limit);
+          fetchedTasks = await api.getTasksSortedByStatus(offset, limit, reverse);
           break;
         default:
           fetchedTasks = await api.getTasksPaginated(offset, limit);
@@ -66,7 +72,7 @@ const TaskList: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [page, sortBy]);
+  }, [page, sortBy, sortDirection]);
 
   const handlePageChange = (_: any, value: number) => {
     setPage(value);
@@ -75,6 +81,11 @@ const TaskList: React.FC = () => {
   const handleSortChange = (event: any) => {
     setSortBy(event.target.value);
     setPage(1); 
+  };
+
+  const handleSortDirectionChange = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    setPage(1);
   };
 
   if (loading) {
@@ -91,19 +102,30 @@ const TaskList: React.FC = () => {
         <Typography variant="h4" component="h1">
           Список задач
         </Typography>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Сортировка</InputLabel>
-          <Select
-            value={sortBy}
-            label="Сортировка"
-            onChange={handleSortChange}
-          >
-            <MenuItem value="none">Без сортировки</MenuItem>
-            <MenuItem value="username">По имени пользователя</MenuItem>
-            <MenuItem value="email">По email</MenuItem>
-            <MenuItem value="status">По статусу</MenuItem>
-          </Select>
-        </FormControl>
+        <Box display="flex" alignItems="center" gap={2}>
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel>Сортировка</InputLabel>
+            <Select
+              value={sortBy}
+              label="Сортировка"
+              onChange={handleSortChange}
+            >
+              <MenuItem value="none">Без сортировки</MenuItem>
+              <MenuItem value="username">По имени пользователя</MenuItem>
+              <MenuItem value="email">По email</MenuItem>
+              <MenuItem value="status">По статусу</MenuItem>
+            </Select>
+          </FormControl>
+          {sortBy !== 'none' && (
+            <Button
+              variant="outlined"
+              onClick={handleSortDirectionChange}
+              startIcon={sortDirection === 'asc' ? <ArrowUpward /> : <ArrowDownward />}
+            >
+              {sortDirection === 'asc' ? 'По возрастанию' : 'По убыванию'}
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {tasks.length === 0 ? (
