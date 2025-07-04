@@ -74,7 +74,9 @@ def update_task(task_id: str, data: TaskCreate, admin=Depends(get_current_admin)
         f"PATCH /task/{task_id} | admin: {admin.username} | payload: {data.model_dump()}"
     )
     try:
-        result = db.update_task(task_id, **data.model_dump())
+        update_data = data.model_dump()
+        update_data['edited_by_admin'] = True
+        result = db.update_task(task_id, **update_data)
         logger.info(f"Task updated: {result.id}")
         return TaskRead(**result.model_dump())
     except NotFoundError as e:
