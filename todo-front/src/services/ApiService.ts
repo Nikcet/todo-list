@@ -118,6 +118,10 @@ export class ApiService {
         });
     }
 
+    public async getTasksCount(): Promise<number> {
+        return this.request<number>('/tasks/length');
+    }
+
     public async getTasksPaginated(offset: number = PAGINATION.DEFAULT_OFFSET, limit: number = PAGINATION.DEFAULT_LIMIT): Promise<Task[]> {
         return this.request<Task[]>(`/tasks/?offset=${offset}&limit=${limit}`);
     }
