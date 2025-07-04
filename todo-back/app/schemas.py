@@ -6,6 +6,7 @@ class TaskCreate(BaseModel):
     email: EmailStr
     text: str = Field(..., min_length=1, max_length=300)
     status: Optional[bool] = False
+    edited_by_admin: Optional[bool] = False
 
 class TaskRead(BaseModel):
     id: str
@@ -13,6 +14,7 @@ class TaskRead(BaseModel):
     email: EmailStr
     text: str
     status: bool
+    edited_by_admin: bool
 
 class AdminCreate(BaseModel):
     username: str = Field(..., min_length=2, max_length=30)

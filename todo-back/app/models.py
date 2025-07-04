@@ -11,6 +11,7 @@ class Task(SQLModel, table=True):
     email: str
     text: str = Field(min_length=1, max_length=300)
     status: bool = Field(default=False)
+    edited_by_admin: bool = Field(default=False)
 
 
 class Admin(SQLModel, table=True):
