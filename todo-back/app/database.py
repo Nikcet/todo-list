@@ -1,23 +1,9 @@
 from sqlmodel import SQLModel, Session, create_engine, select
-from app.models import Task, Admin
 from typing import List
 from sqlalchemy import Column
 
-
-class DatabaseError(Exception):
-    pass
-
-
-class NotFoundError(Exception):
-    pass
-
-
-class UpdateError(Exception):
-    pass
-
-
-class DeleteError(Exception):
-    pass
+from app.models import Task, Admin
+from app.errors import DatabaseError, NotFoundError, UpdateError, DeleteError
 
 
 class DatabaseAPI:
