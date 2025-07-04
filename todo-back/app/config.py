@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = os.environ["JWT_ALGORITHM"]
     jwt_access_token_expire_minutes: int = 60 * 24 * 7
 
+    db_url: str = os.environ["DB_URL"]
 
 @lru_cache
 def get_settings() -> Settings:
