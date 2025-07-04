@@ -10,7 +10,7 @@ import {
   FormControlLabel,
   IconButton
 } from '@mui/material';
-import { Edit, Save, Cancel } from '@mui/icons-material';
+import { Edit, Save, Cancel, Delete } from '@mui/icons-material';
 import type { Task, TaskCreate } from '../types';
 import { api } from '../services';
 import { useTask } from '../contexts';
@@ -32,6 +32,7 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task }) => {
     edited_by_admin: task.edited_by_admin
   });
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { refreshTasks } = useTask();
@@ -102,6 +103,32 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task }) => {
     });
     setIsEditing(false);
     setError(null);
+  };
+
+  const handleDelete = async () => {
+    refreshAuthStatus();
+    
+    if (!api.isAuthenticated()) {
+      setError('Для удаления задач необходимо авторизоваться как администратор');
+      openLoginModal();
+      return;
+    }
+
+    if (!window.confirm('Вы уверены, что хотите удалить эту задачу?')) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setError(null);
+      
+      await api.deleteTask(task.id);
+      refreshTasks();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка при удалении задачи');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -200,13 +227,24 @@ const EditableTask: React.FC<EditableTaskProps> = ({ task }) => {
           </Box>
 
           {!isEditing && (
-            <IconButton
-              onClick={handleEditClick}
-              color="primary"
-              size="small"
-            >
-              <Edit />
-            </IconButton>
+            <Box display="flex" gap={1}>
+              <IconButton
+                onClick={handleEditClick}
+                color="primary"
+                size="small"
+                disabled={deleteLoading}
+              >
+                <Edit />
+              </IconButton>
+              <IconButton
+                onClick={handleDelete}
+                color="error"
+                size="small"
+                disabled={deleteLoading}
+              >
+                <Delete />
+              </IconButton>
+            </Box>
           )}
         </Box>
       </CardContent>
