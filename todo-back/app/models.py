@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field
 from shortuuid import uuid
-from pydantic import EmailStr
 
 
 class Task(SQLModel, table=True):
@@ -9,7 +8,7 @@ class Task(SQLModel, table=True):
         min_length=2,
         max_length=30,
     )
-    email: EmailStr
+    email: str
     text: str = Field(min_length=1, max_length=300)
     status: bool = Field(default=False)
 
