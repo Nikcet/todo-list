@@ -190,11 +190,15 @@ def get_tasks_paginated(offset: int = Query(0), limit: int = Query(3)):
 
 
 @router.get("/tasks/sorted/username", response_model=List[TaskRead])
-def get_tasks_sorted_by_username(offset: int = Query(0), limit: int = Query(3)):
-    logger.info(f"GET /tasks/sorted/username | offset: {offset}, limit: {limit}")
+def get_tasks_sorted_by_username(
+    offset: int = Query(0), 
+    limit: int = Query(3), 
+    reverse: bool = Query(False, description="Сортировка в обратном порядке")
+):
+    logger.info(f"GET /tasks/sorted/username | offset: {offset}, limit: {limit}, reverse: {reverse}")
     try:
-        result = db.get_tasks_sorted_by_username(offset=offset, limit=limit)
-        logger.info(f"Fetched {len(result)} tasks (sorted by username)")
+        result = db.get_tasks_sorted_by_username(offset=offset, limit=limit, reverse=reverse)
+        logger.info(f"Fetched {len(result)} tasks (sorted by username, reverse: {reverse})")
         return [TaskRead(**task.model_dump()) for task in result]
     except DatabaseError as e:
         logger.error(str(e))
@@ -208,11 +212,15 @@ def get_tasks_sorted_by_username(offset: int = Query(0), limit: int = Query(3)):
 
 
 @router.get("/tasks/sorted/email", response_model=List[TaskRead])
-def get_tasks_sorted_by_email(offset: int = Query(0), limit: int = Query(3)):
-    logger.info(f"GET /tasks/sorted/email | offset: {offset}, limit: {limit}")
+def get_tasks_sorted_by_email(
+    offset: int = Query(0), 
+    limit: int = Query(3), 
+    reverse: bool = Query(False, description="Сортировка в обратном порядке")
+):
+    logger.info(f"GET /tasks/sorted/email | offset: {offset}, limit: {limit}, reverse: {reverse}")
     try:
-        result = db.get_tasks_sorted_by_email(offset=offset, limit=limit)
-        logger.info(f"Fetched {len(result)} tasks (sorted by email)")
+        result = db.get_tasks_sorted_by_email(offset=offset, limit=limit, reverse=reverse)
+        logger.info(f"Fetched {len(result)} tasks (sorted by email, reverse: {reverse})")
         return [TaskRead(**task.model_dump()) for task in result]
     except DatabaseError as e:
         logger.error(str(e))
@@ -226,11 +234,15 @@ def get_tasks_sorted_by_email(offset: int = Query(0), limit: int = Query(3)):
 
 
 @router.get("/tasks/sorted/status", response_model=List[TaskRead])
-def get_tasks_sorted_by_status(offset: int = Query(0), limit: int = Query(3)):
-    logger.info(f"GET /tasks/sorted/status | offset: {offset}, limit: {limit}")
+def get_tasks_sorted_by_status(
+    offset: int = Query(0), 
+    limit: int = Query(3), 
+    reverse: bool = Query(False, description="Сортировка в обратном порядке")
+):
+    logger.info(f"GET /tasks/sorted/status | offset: {offset}, limit: {limit}, reverse: {reverse}")
     try:
-        result = db.get_tasks_sorted_by_status(offset=offset, limit=limit)
-        logger.info(f"Fetched {len(result)} tasks (sorted by status)")
+        result = db.get_tasks_sorted_by_status(offset=offset, limit=limit, reverse=reverse)
+        logger.info(f"Fetched {len(result)} tasks (sorted by status, reverse: {reverse})")
         return [TaskRead(**task.model_dump()) for task in result]
     except DatabaseError as e:
         logger.error(str(e))
