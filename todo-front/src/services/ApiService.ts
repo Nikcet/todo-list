@@ -64,6 +64,7 @@ export class ApiService {
         const config: RequestInit = {
             headers: {
                 'Content-Type': 'application/json',
+                'Credentials': 'include',
                 ...options.headers,
             },
             ...options,
